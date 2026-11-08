@@ -1,0 +1,15 @@
+{
+  "name": "constructreality-studio-finale",
+  "version": "0.1.0",
+  "description": "ConstructReality Studio: client-facing VR design app (WebXR for Meta Quest 3) with a plan-generating backend.",
+  "private": true,
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server/index.js",
+    "sample": "node test/sample.js"
+  },
+  "dependencies": {
+    "express": "4.19.2"
+  }
+}

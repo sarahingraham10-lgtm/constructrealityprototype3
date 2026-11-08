@@ -1,0 +1,98 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Client portal | ConstructReality</title><link rel="stylesheet" href="/site.css">
+<style>
+.stage{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}.dot{flex:none;width:30px;height:30px;border:3px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;background:#fff}
+.dot.done{background:#000;color:#fff}.dot.working{background:repeating-linear-gradient(45deg,#000,#000 4px,#fff 4px,#fff 8px)}.dot.review{border-color:var(--amber);color:var(--amber)}.dot.changes{border-color:var(--red);color:var(--red)}.dot.waiting{border-color:var(--line);color:var(--mid)}
+.badge{display:inline-block;padding:2px 10px;border:2px solid #000;border-radius:12px;font-size:13px;font-weight:700;margin-left:8px}.badge.done{background:#000;color:#fff}.badge.review{border-color:var(--amber);color:var(--amber)}.badge.changes{border-color:var(--red);color:var(--red)}.badge.waiting{border-color:var(--line);color:var(--mid)}
+.mut{color:var(--mid);font-size:14px}.msg{border-left:4px solid #000;padding:4px 12px;margin:8px 0}.msg.me{border-color:var(--green)}
+.draw{border:2px solid #000;padding:6px;overflow:auto;max-height:75vh}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0}.tabs button{padding:9px 14px;border:2px solid #000;background:#fff;font:inherit;cursor:pointer}.tabs button.on{background:#000;color:#fff}
+.box{max-width:460px;margin:40px auto;border:2px solid #000;padding:26px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:150px}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);font-size:15px}
+</style></head><body>
+<div id="site-top"></div>
+<main class="wrap" style="padding-top:26px;padding-bottom:60px" id="app"></main>
+<div id="site-foot"></div><script src="/site.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let T=null,PROJ=[],PROF=null,CUR=null,TAB='progress',MODE='in',poll=0;
+const QP=new URLSearchParams(location.search);if(QP.get('ref')||location.hash==='#register')MODE='reg';
+const PRE=()=>{const m={rn:'name',re:'email',rp:'phone',rr:'ref',rc:'code'};Object.keys(m).forEach(i=>{const e=document.getElementById(i),v=QP.get(m[i]);if(e&&v&&!e.value)e.value=v.slice(0,100)})};
+try{T=sessionStorage.getItem('crc')?JSON.parse(sessionStorage.getItem('crc')).token:null}catch(e){}
+const LBL={waiting:'Not started',working:'In progress',review:'Waiting review',changes:'Being corrected',done:'Complete'};
+const api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{'content-type':'application/json',...(T?{authorization:'Bearer '+T}:{})},body:o.body?JSON.stringify(o.body):undefined});const j=await r.json().catch(()=>({}));if(r.status===401&&T&&!p.includes('login')){signout();throw new Error('Please sign in again.')}if(!r.ok)throw new Error(j.error||'Something went wrong');return j};
+const when=i=>i?new Date(i).toLocaleString('en-JM',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+const money=(n,c)=>(c||'JMD')+' '+Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+function signout(){T=null;CUR=null;sessionStorage.removeItem('crc');render()}
+function authView(){
+ const reg=MODE==='reg';
+ return `<div class="box"><h2 class="t" style="font-size:28px">${reg?'Create your account':'Client sign-in'}</h2>
+ <p class="mut">${reg?'Choose your own username and password. If you have just sent a design from the headset, enter its reference and access code to link it.':'Welcome back.'}</p>
+ ${reg?`<label>Your name</label><input id="rn" maxlength="60" autocomplete="name">`:''}
+ <label>Username</label><input id="ru" maxlength="30" autocomplete="username" placeholder="letters, numbers, dots or dashes">
+ ${reg?`<label>Email</label><input id="re" type="email" maxlength="100" autocomplete="email"><label>Phone (optional)</label><input id="rp" maxlength="30" autocomplete="tel">`:''}
+ <label>Password ${reg?'(8 or more characters)':''}</label><input id="rw" type="password" autocomplete="${reg?'new-password':'current-password'}">
+ ${reg?`<div class="row"><div><label>Project reference</label><input id="rr" placeholder="CR-..." maxlength="30"></div><div><label>Access code</label><input id="rc" maxlength="12"></div></div><div class="hp"><input id="rh" tabindex="-1" autocomplete="off"></div>`:''}
+ <div class="err" id="er"></div><p><button class="btn" id="go">${reg?'Create account':'Sign in'}</button></p>
+ <p>${reg?'Already have an account? <a href="#" id="sw">Sign in</a>':'New here? <a href="#" id="sw">Create an account</a>'}</p>
+ <p class="mut">Staff and professionals: use the <a href="/team">team workspace</a>.</p></div>`}
+async function doAuth(){
+ try{let j;
+  if(MODE==='reg'){j=await api('/api/portal/register',{method:'POST',body:{name:$('#rn').value,username:$('#ru').value,email:$('#re').value,phone:$('#rp').value,password:$('#rw').value,ref:$('#rr').value,code:$('#rc').value,website:$('#rh').value}});if(j.claimError)alert('Your account is made, but the project could not be linked: '+j.claimError+'\nYou can try again after signing in.')}
+  else{j=await api('/api/team/login',{method:'POST',body:{username:$('#ru').value,password:$('#rw').value}});if(j.role!=='client'){$('#er').innerHTML='That account is a team account. <a href="/team">Use the team workspace</a>.';return}}
+  T=j.token;sessionStorage.setItem('crc',JSON.stringify({token:T}));await load();if(PROJ.length===1)open(PROJ[0].ref);render()
+ }catch(e){$('#er').textContent=e.message}}
+async function load(){const j=await api('/api/portal/projects');PROJ=j.projects;PROF=j.profile}
+async function open(ref){CUR=await api('/api/portal/projects/'+ref);TAB='progress';render();window.scrollTo(0,0)}
+function head(){return `<div class="row" style="align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px"><div><b>${esc(PROF&&PROF.name)}</b> <span class="mut">client portal</span></div><div style="flex:none"><button class="btn alt" id="acct" style="padding:8px 14px">My account</button> <button class="btn alt" id="so" style="padding:8px 14px">Sign out</button></div></div>`}
+function list(){
+ return head()+`<h2 class="t">Your projects</h2>${PROJ.length?PROJ.map(p=>`<div class="card" style="margin:10px 0;cursor:pointer" data-p="${p.ref}"><b>${esc(p.client&&p.client!=='(no name given)'?p.client:'Your home design')}</b> <span class="mut">${esc(p.ref)}</span>${p.superseded?'<span class="badge waiting">Replaced by newer version</span>':''}${p.proposal?'<span class="badge review">Proposal waiting for you</span>':''}<div class="mut">Sent ${when(p.date)}</div></div>`).join(''):'<p>You have no projects linked yet. Enter the reference and access code shown after you sent your design.</p>'}
+ <div class="card" style="margin-top:20px"><h3>Link a project</h3><div class="row"><div><label>Project reference</label><input id="cr" placeholder="CR-..."></div><div><label>Access code</label><input id="cc"></div></div><div class="err" id="er"></div><p><button class="btn" id="cl">Link project</button></p></div>`}
+function stageHtml(s,i){const st=s.status;return `<div class="stage"><div class="dot ${st}">${st==='done'?'&#10003;':i+1}</div><div><b>${esc(s.title)}</b><span class="badge ${st}">${LBL[st]}</span><div class="mut">${esc(s.text)}${s.at?' - '+when(s.at):''}</div></div></div>`}
+function detail(){
+ const c=CUR,done=c.stages.filter(s=>s.status==='done').length;
+ return head()+`<p><a href="#" id="back">&larr; All projects</a></p><h2 class="t" style="font-size:30px">${esc(c.client&&c.client!=='(no name given)'?c.client:'Your home design')} <span class="mut" style="font-size:15px">${esc(c.ref)}</span></h2>
+ ${c.superseded?`<div class="note"><b>This is an older version.</b> You sent a newer design (${esc(c.superseded)}). Open that one.</div>`:''}
+ <p class="mut">${c.summary.storeys} floor${c.summary.storeys>1?'s':''} &middot; ${c.summary.rooms} rooms &middot; ${c.summary.floorArea} m² &middot; Your project manager: <b>${esc(c.pmName||'to be assigned')}</b></p>
+ <div class="tabs">${[['progress','Progress'],['proposal','Proposal'+(c.proposal&&c.clientDecision.status==='pending'?' (!)':'')],['drawings','Drawings'],['messages','Messages'],['design','My design']].map(t=>`<button data-t="${t[0]}" class="${TAB===t[0]?'on':''}">${t[1]}</button>`).join('')}</div>
+ ${TAB==='progress'?`<p><b>${done} of ${c.stages.length}</b> stages complete.</p>${c.stages.map(stageHtml).join('')}<h3 style="margin-top:24px">Latest updates</h3>${c.updates.length?c.updates.slice(0,15).map(u=>`<p style="margin:6px 0"><span class="mut">${when(u.t)}</span><br>${esc(u.text)}</p>`).join(''):'<p class="mut">No updates yet.</p>'}`:''}
+ ${TAB==='proposal'?proposal(c):''}
+ ${TAB==='drawings'?`<div class="note">These drawings are concept drafts made from your design. Professionals prepare the checked and signed versions.</div>${c.drawings.length?`<select id="dsel">${c.drawings.map(d=>`<option value="${d.file}">${esc(d.title)}</option>`).join('')}</select><div class="draw" style="margin-top:12px"><img id="dimg" alt="drawing"></div>`:'<p>No drawings yet.</p>'}`:''}
+ ${TAB==='messages'?`<p class="mut">Messages with your project manager.</p>${c.messages.map(m=>`<div class="msg ${m.role==='client'?'me':''}"><b>${esc(m.who)}</b> <span class="mut">${when(m.t)}</span><div>${esc(m.text)}</div></div>`).join('')||'<p class="mut">No messages yet.</p>'}<textarea id="mt" placeholder="Write a message"></textarea><p><button class="btn" id="mb">Send</button></p><div class="err" id="er"></div>`:''}
+ ${TAB==='design'?`<table><tr><th>Room</th><th>Floor</th><th>Size (m)</th><th>Area</th></tr>${c.summary.roomList.map(r=>`<tr><td>${esc(r.name)}</td><td>${['Ground','First','Second'][r.level]}</td><td>${r.w} x ${r.d}</td><td>${r.area} m²</td></tr>`).join('')}</table><p class="mut">Want to change something? Open the studio, change your design and send it again. Your progress moves to the new version.</p><p><a class="btn" href="/studio.html">Open the VR studio</a></p>`:''}`}
+function proposal(c){
+ const p=c.proposal;if(!p)return '<p>Your proposal is not ready yet. When every professional has finished and your project manager has checked it, it will appear here.</p>';
+ const d=c.clientDecision;
+ return `<div class="card"><h3>Proposal from ${esc(c.pmName||'your project manager')}</h3><p class="mut">Shared ${when(p.at)}</p>${p.note?`<p>${esc(p.note).replace(/\n/g,'<br>')}</p>`:''}
+ ${p.quote?`<div class="note"><b>Price: ${money(p.quote.amount,p.quote.currency)}</b> from ${esc(p.quote.who)}<br>${p.quote.valid?'Valid: '+esc(p.quote.valid)+'<br>':''}${p.quote.days?'Time to build: '+esc(p.quote.days)+'<br>':''}${esc(p.quote.note)}</div>`:''}
+ ${p.docs.length?`<h3>Documents</h3>${p.docs.map(x=>x.link?`<p><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a></p>`:`<p><a href="#" data-doc="${x.id}">${esc(x.title)} (download)</a></p>`).join('')}`:''}
+ ${d.status==='accepted'?`<p class="ok">You accepted this proposal on ${when(d.at)}.</p>`:d.status==='changes'?`<p><b>You asked for changes</b> (${when(d.at)}): ${esc(d.note)}</p><p class="mut">Your project manager will reply.</p>`:`<label>Anything you would like changed? (required if you ask for changes)</label><textarea id="dn"></textarea><div class="err" id="er"></div><p class="row" style="gap:10px"><button class="btn" id="acc" style="flex:none">Accept this proposal</button><button class="btn alt" id="chg" style="flex:none">Ask for changes</button></p>`}
+ <p class="mut">Accepting tells us you want to go ahead. A contract for building is a separate agreement with the contractor.</p></div>`}
+function render(){
+ const a=$('#app');
+ if(!T){a.innerHTML=authView();PRE();$('#go').onclick=doAuth;$('#rw').onkeydown=e=>{if(e.key==='Enter')doAuth()};$('#sw').onclick=e=>{e.preventDefault();MODE=MODE==='reg'?'in':'reg';render()};return}
+ a.innerHTML=CUR?detail():list();
+ $('#so').onclick=signout;$('#acct').onclick=account;
+ if(!CUR){document.querySelectorAll('[data-p]').forEach(e=>e.onclick=()=>open(e.dataset.p));$('#cl').onclick=async()=>{try{const j=await api('/api/portal/claim',{method:'POST',body:{ref:$('#cr').value,code:$('#cc').value}});await load();open(j.ref)}catch(e){$('#er').textContent=e.message}}}
+ else{
+  $('#back').onclick=async e=>{e.preventDefault();CUR=null;await load();render()};
+  document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{TAB=b.dataset.t;render()});
+  const ds=$('#dsel');if(ds){const show=async()=>{try{const r=await fetch('/api/portal/files/'+CUR.ref+'/drawing/'+ds.value,{headers:{authorization:'Bearer '+T}});$('#dimg').src=URL.createObjectURL(await r.blob())}catch(e){}};ds.onchange=show;show()}
+  const mb=$('#mb');if(mb)mb.onclick=async()=>{try{await api('/api/team/projects/'+CUR.ref+'/message',{method:'POST',body:{text:$('#mt').value}});CUR=await api('/api/portal/projects/'+CUR.ref);render()}catch(e){$('#er').textContent=e.message}};
+  const dec=async(s)=>{try{await api('/api/portal/projects/'+CUR.ref+'/decision',{method:'POST',body:{status:s,note:$('#dn').value}});CUR=await api('/api/portal/projects/'+CUR.ref);render()}catch(e){$('#er').textContent=e.message}};
+  if($('#acc'))$('#acc').onclick=()=>dec('accepted');if($('#chg'))$('#chg').onclick=()=>dec('changes');
+  document.querySelectorAll('[data-doc]').forEach(x=>x.onclick=async e=>{e.preventDefault();const r=await fetch('/api/team/files/'+CUR.ref+'/upload/'+x.dataset.doc,{headers:{authorization:'Bearer '+T}});if(!r.ok)return alert('Could not open that file.');const a=document.createElement('a');a.href=URL.createObjectURL(await r.blob());a.download='document';a.click()});
+ }
+}
+function account(){
+ const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px';
+ const p=PROF||{};d.innerHTML=`<div style="background:#fff;border:2px solid #000;padding:22px;max-width:460px;width:100%;max-height:90vh;overflow:auto"><h3>My details</h3>
+ <label>Name</label><input id="an" value="${esc(p.name)}"><label>Email</label><input id="ae" value="${esc(p.email)}"><label>Phone</label><input id="ap" value="${esc(p.phone)}"><label>Address or lot description</label><input id="aa" value="${esc(p.address)}"><label>Parish</label><input id="ar" value="${esc(p.parish)}">
+ <p class="mut">Your username is <b>${esc(p.username)}</b>.</p><div class="ok" id="ok"></div><div class="err" id="ae2"></div><p><button class="btn" id="sv">Save details</button></p>
+ <h3 style="margin-top:18px">Change password</h3><label>Current password</label><input id="po" type="password"><label>New password (8 or more characters)</label><input id="pn" type="password"><div class="err" id="pe"></div><p><button class="btn alt" id="pw">Change password</button> <button class="btn alt" id="cx">Close</button></p></div>`;
+ document.body.appendChild(d);d.querySelector('#cx').onclick=()=>d.remove();
+ d.querySelector('#sv').onclick=async()=>{try{const j=await api('/api/team/profile',{method:'POST',body:{name:an.value,email:ae.value,phone:ap.value,address:aa.value,parish:ar.value}});PROF=j.profile;d.querySelector('#ok').textContent='Saved.'}catch(e){d.querySelector('#ae2').textContent=e.message}};
+ d.querySelector('#pw').onclick=async()=>{try{const j=await api('/api/team/password',{method:'POST',body:{old:po.value,password:pn.value}});T=j.token;sessionStorage.setItem('crc',JSON.stringify({token:T}));d.remove();alert('Password changed.')}catch(e){d.querySelector('#pe').textContent=e.message}};
+}
+async function start(){if(T){try{await load();if(PROJ.length===1&&!CUR)CUR=await api('/api/portal/projects/'+PROJ[0].ref)}catch(e){T=null}}render()}
+setInterval(async()=>{if(T&&!document.hidden&&!document.activeElement.matches('input,textarea')&&!document.querySelector('[style*="position:fixed"]')){try{if(CUR&&TAB!=='drawings')CUR=await api('/api/portal/projects/'+CUR.ref);else if(!CUR)await load();render()}catch(e){}}},15000);
+start();
+</script></body></html>

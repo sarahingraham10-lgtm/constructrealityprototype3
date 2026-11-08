@@ -1,0 +1,116 @@
+{
+  "meta": {
+    "ref": "CR-SAMPLE-0001",
+    "client": "Sample client",
+    "project": "Sample 3 bedroom home",
+    "date": "2026-11-04T01:52:55.968Z"
+  },
+  "design": {
+    "plot": {
+      "w": 16,
+      "d": 12
+    },
+    "rooms": [
+      {
+        "id": "R1",
+        "type": "bedroom",
+        "name": "",
+        "x": 0.5,
+        "z": 3,
+        "w": 4,
+        "d": 3.5,
+        "label": "Bedroom 1",
+        "area": 14
+      },
+      {
+        "id": "R2",
+        "type": "bedroom",
+        "name": "",
+        "x": 4.5,
+        "z": 3,
+        "w": 3.5,
+        "d": 3.5,
+        "label": "Bedroom 2",
+        "area": 12.25
+      },
+      {
+        "id": "R3",
+        "type": "bedroom",
+        "name": "",
+        "x": 8,
+        "z": 3,
+        "w": 3.5,
+        "d": 3.5,
+        "label": "Bedroom 3",
+        "area": 12.25
+      },
+      {
+        "id": "R4",
+        "type": "bathroom",
+        "name": "",
+        "x": 11.5,
+        "z": 3,
+        "w": 2,
+        "d": 3.5,
+        "label": "Bathroom 1",
+        "area": 7
+      },
+      {
+        "id": "R5",
+        "type": "laundry",
+        "name": "",
+        "x": 13.5,
+        "z": 3,
+        "w": 2,
+        "d": 3.5,
+        "label": "Laundry",
+        "area": 7
+      },
+      {
+        "id": "R6",
+        "type": "living",
+        "name": "",
+        "x": 0.5,
+        "z": 6.5,
+        "w": 5.5,
+        "d": 4.5,
+        "label": "Living room",
+        "area": 24.75
+      },
+      {
+        "id": "R7",
+        "type": "kitchen",
+        "name": "",
+        "x": 6,
+        "z": 6.5,
+        "w": 4,
+        "d": 4.5,
+        "label": "Kitchen",
+        "area": 18
+      },
+      {
+        "id": "R8",
+        "type": "dining",
+        "name": "",
+        "x": 10,
+        "z": 6.5,
+        "w": 3.5,
+        "d": 4.5,
+        "label": "Dining",
+        "area": 15.75
+      },
+      {
+        "id": "R9",
+        "type": "bathroom",
+        "name": "",
+        "x": 13.5,
+        "z": 6.5,
+        "w": 2,
+        "d": 4.5,
+        "label": "Bathroom 2",
+        "area": 9
+      }
+    ]
+  },
+  "issues": []
+}

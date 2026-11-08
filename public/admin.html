@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ConstructReality Staff Console</title>
+<style>
+ body{margin:0;font-family:Helvetica,Arial,sans-serif;color:#000;background:#fff}
+ header{background:#000;padding:14px 20px;display:flex;align-items:center;gap:16px;color:#fff}
+ header img{height:34px}
+ main{max-width:1100px;margin:0 auto;padding:20px;display:grid;gap:28px}
+ h2{margin:0 0 10px;font-size:20px;border-bottom:2px solid #000;padding-bottom:6px}
+ table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #ccc;font-size:14px;vertical-align:top}
+ th{background:#f1f1f1}
+ input,button{font:inherit;padding:8px 10px;border:2px solid #000;border-radius:2px;background:#fff}
+ button{background:#000;color:#fff;cursor:pointer}
+ a{color:#000}
+ .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+ .prev{border:2px solid #000;padding:6px;background:#fff;max-width:100%}
+ .prev img{max-width:100%;display:block}
+ small{color:#555}
+</style></head><body>
+<header><img src="/logo_white.png" alt="ConstructReality"><strong>Staff console</strong><a href="/team" style="color:#fff;margin-left:auto">Team workspace</a></header>
+<main>
+ <section><h2>Staff key</h2><div class="row"><input id="key" type="password" placeholder="ADMIN_KEY" size="28"><button id="save">Use key</button><small id="st"></small></div></section>
+ <section><h2>Headsets in use</h2><div id="sessions"><small>Enter the staff key.</small></div></section>
+ <section id="prevsec" hidden><h2>Live floor plan</h2><div class="prev"><img id="prev" alt="Live floor plan"></div></section>
+ <section><h2>Finished designs for architects</h2><div id="projects"><small>Enter the staff key.</small></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let K=sessionStorage.getItem('crk')||'';$('key').value=K;
+const H=()=>({'x-admin-key':K,'content-type':'application/json'});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function load(){
+  if(!K)return;
+  const s=await fetch('/api/admin/sessions',{headers:H()});if(s.status===401){$('st').textContent='Wrong key.';return;}$('st').textContent='Connected.';
+  const sj=await s.json();
+  $('sessions').innerHTML=sj.sessions.length?`<table><tr><th>Code</th><th>Client name</th><th>Rooms</th><th>Message to headset</th><th></th></tr>${sj.sessions.map(x=>`<tr><td><b>${esc(x.id)}</b>${x.sent?'<br><small>sent</small>':''}</td><td><input data-n="${esc(x.id)}" value="${esc(x.client)}" placeholder="Name"> <button data-sn="${esc(x.id)}">Save</button></td><td>${x.rooms}</td><td><input data-m="${esc(x.id)}" placeholder="Short note for the client" size="30"> <button data-sm="${esc(x.id)}">Send</button></td><td><button data-v="${esc(x.id)}">View plan</button></td></tr>`).join('')}</table>`:'<small>No active sessions.</small>';
+  const p=await (await fetch('/api/admin/projects',{headers:H()})).json();
+  $('projects').innerHTML=p.projects.length?`<table><tr><th>Reference</th><th>Client</th><th>Date</th><th>Files</th></tr>${p.projects.map(x=>`<tr><td><b>${esc(x.ref)}</b></td><td>${esc(x.client)}</td><td>${esc(String(x.date).slice(0,16).replace('T',' '))}</td><td>${x.files.map(f=>`<a href="/api/admin/projects/${esc(x.ref)}/${esc(f)}?key=${encodeURIComponent(K)}" target="_blank" rel="noopener">${esc(f)}</a>`).join('<br>')}</td></tr>`).join('')}</table>`:'<small>Nothing sent yet.</small>';
+}
+$('save').onclick=()=>{K=$('key').value;sessionStorage.setItem('crk',K);load();};
+document.addEventListener('click',async e=>{
+  const t=e.target;
+  if(t.dataset.sn){await fetch('/api/admin/sessions/'+t.dataset.sn,{method:'POST',headers:H(),body:JSON.stringify({client:document.querySelector(`[data-n="${t.dataset.sn}"]`).value})});load();}
+  if(t.dataset.sm){const i=document.querySelector(`[data-m="${t.dataset.sm}"]`);await fetch('/api/admin/sessions/'+t.dataset.sm,{method:'POST',headers:H(),body:JSON.stringify({note:i.value})});i.value='';}
+  if(t.dataset.v){const r=await fetch('/api/admin/sessions/'+t.dataset.v+'/plan.svg',{headers:H()});if(r.ok){const b=await r.blob();$('prev').src=URL.createObjectURL(b);$('prevsec').hidden=false;}}
+});
+setInterval(()=>{if(document.activeElement.tagName!=='INPUT')load();},8000);load();
+</script></body></html>

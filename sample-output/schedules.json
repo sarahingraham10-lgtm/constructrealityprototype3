@@ -1,0 +1,243 @@
+{
+  "plot": {
+    "w": 16,
+    "d": 12
+  },
+  "rooms": [
+    {
+      "id": "R1",
+      "name": "Bedroom 1",
+      "type": "bedroom",
+      "width": 4,
+      "depth": 3.5,
+      "area": 14
+    },
+    {
+      "id": "R2",
+      "name": "Bedroom 2",
+      "type": "bedroom",
+      "width": 3.5,
+      "depth": 3.5,
+      "area": 12.25
+    },
+    {
+      "id": "R3",
+      "name": "Bedroom 3",
+      "type": "bedroom",
+      "width": 3.5,
+      "depth": 3.5,
+      "area": 12.25
+    },
+    {
+      "id": "R4",
+      "name": "Bathroom 1",
+      "type": "bathroom",
+      "width": 2,
+      "depth": 3.5,
+      "area": 7
+    },
+    {
+      "id": "R5",
+      "name": "Laundry",
+      "type": "laundry",
+      "width": 2,
+      "depth": 3.5,
+      "area": 7
+    },
+    {
+      "id": "R6",
+      "name": "Living room",
+      "type": "living",
+      "width": 5.5,
+      "depth": 4.5,
+      "area": 24.75
+    },
+    {
+      "id": "R7",
+      "name": "Kitchen",
+      "type": "kitchen",
+      "width": 4,
+      "depth": 4.5,
+      "area": 18
+    },
+    {
+      "id": "R8",
+      "name": "Dining",
+      "type": "dining",
+      "width": 3.5,
+      "depth": 4.5,
+      "area": 15.75
+    },
+    {
+      "id": "R9",
+      "name": "Bathroom 2",
+      "type": "bathroom",
+      "width": 2,
+      "depth": 4.5,
+      "area": 9
+    }
+  ],
+  "floorArea": 120,
+  "exteriorWallLength": 46,
+  "interiorWallLength": 42.5,
+  "doors": {
+    "exterior": 2,
+    "interior": 8
+  },
+  "windows": 11,
+  "fixtures": {
+    "Bed": 3,
+    "Wardrobe": 3,
+    "Shower": 2,
+    "Toilet": 2,
+    "Wash basin": 2,
+    "Washing machine": 1,
+    "Laundry sink": 1,
+    "Sofa": 1,
+    "TV unit": 1,
+    "Refrigerator": 1,
+    "Kitchen sink": 1,
+    "Cooker": 1,
+    "Counter": 1,
+    "Dining table": 1
+  },
+  "lighting": {
+    "lights": 15,
+    "switches": 18
+  },
+  "electrical": {
+    "outlets": 23,
+    "acPoints": 4,
+    "dedicatedPoints": 5,
+    "circuits": [
+      {
+        "id": "L1",
+        "kind": "Lighting",
+        "points": 8,
+        "watts": 96,
+        "rooms": "Bedroom 1, Bedroom 2, Bedroom 3, Bathroom 1, Laundry, Living room"
+      },
+      {
+        "id": "L2",
+        "kind": "Lighting",
+        "points": 7,
+        "watts": 84,
+        "rooms": "Living room, Kitchen, Dining, Bathroom 2"
+      },
+      {
+        "id": "P1",
+        "kind": "Power outlets",
+        "points": 8,
+        "watts": 1600,
+        "rooms": "Bedroom 1, Bedroom 2, Bedroom 3"
+      },
+      {
+        "id": "P2",
+        "kind": "Power outlets",
+        "points": 8,
+        "watts": 1600,
+        "rooms": "Bedroom 3, Bathroom 1, Laundry, Living room, Dining"
+      },
+      {
+        "id": "P3",
+        "kind": "Power outlets",
+        "points": 3,
+        "watts": 600,
+        "rooms": "Dining, Bathroom 2"
+      },
+      {
+        "id": "K1",
+        "kind": "Kitchen counter outlets",
+        "points": 4,
+        "watts": 1600,
+        "rooms": "Kitchen"
+      },
+      {
+        "id": "A1",
+        "kind": "Air conditioner",
+        "points": 1,
+        "watts": 1100,
+        "rooms": "Bedroom 1"
+      },
+      {
+        "id": "A2",
+        "kind": "Air conditioner",
+        "points": 1,
+        "watts": 1100,
+        "rooms": "Bedroom 2"
+      },
+      {
+        "id": "A3",
+        "kind": "Air conditioner",
+        "points": 1,
+        "watts": 1100,
+        "rooms": "Bedroom 3"
+      },
+      {
+        "id": "A4",
+        "kind": "Air conditioner",
+        "points": 1,
+        "watts": 1100,
+        "rooms": "Living room"
+      },
+      {
+        "id": "H1",
+        "kind": "Shower heater",
+        "points": 1,
+        "watts": 3500,
+        "rooms": "Bathroom 1"
+      },
+      {
+        "id": "W1",
+        "kind": "Washer",
+        "points": 1,
+        "watts": 500,
+        "rooms": "Laundry"
+      },
+      {
+        "id": "F1",
+        "kind": "Fridge",
+        "points": 1,
+        "watts": 150,
+        "rooms": "Kitchen"
+      },
+      {
+        "id": "C1",
+        "kind": "Cooker",
+        "points": 1,
+        "watts": 3000,
+        "rooms": "Kitchen"
+      },
+      {
+        "id": "H2",
+        "kind": "Shower heater",
+        "points": 1,
+        "watts": 3500,
+        "rooms": "Bathroom 2"
+      }
+    ],
+    "connectedLoadW": 20630
+  },
+  "plumbing": {
+    "meter": {
+      "x": 15.5,
+      "z": 4.75
+    },
+    "sewer": {
+      "x": 12.5,
+      "z": 3
+    },
+    "heater": {
+      "x": 12.13,
+      "z": 4.17,
+      "room": 3
+    },
+    "pipeLengthByDiameterMm": {
+      "15": 13.18,
+      "20": 13.94,
+      "25": 15.02,
+      "50": 6.01,
+      "100": 18.09
+    }
+  }
+}

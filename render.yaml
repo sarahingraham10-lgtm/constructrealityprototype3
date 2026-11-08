@@ -1,0 +1,21 @@
+# Render blueprint. Push this repo to GitHub, then in Render choose New > Blueprint and pick the repo.
+services:
+  - type: web
+    name: constructreality-studio-finale
+    runtime: node
+    plan: starter          # a disk needs a paid plan; on the free plan saved projects are LOST when the server restarts
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: crdata
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATA_DIR
+        value: /var/data
+      - key: STAFF_PIN
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: TEAM_SECRET
+        generateValue: true

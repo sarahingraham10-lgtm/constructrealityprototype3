@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contact | ConstructReality</title><meta name="description" content="Ask a question or tell us about your project."><link rel="stylesheet" href="/site.css"></head><body>
+<div id="site-top"></div>
+
+<section class="hero"><div class="wrap"><h1>Contact us</h1><p>Tell us about your project or your profession and we will reply.</p></div></section>
+<section class="s"><div class="wrap"><div class="two"><form id="f" novalidate><label>Your name</label><input id="n" maxlength="80" autocomplete="name"><label>Email</label><input id="e" type="email" maxlength="100" autocomplete="email"><label>Phone (optional)</label><input id="p" maxlength="30" autocomplete="tel">
+<label>I am a</label><select id="tp"><option>Homeowner or client</option><option>Architect</option><option>Land surveyor</option><option>Engineer</option><option>Contractor</option><option>Supplier</option><option>Other</option></select>
+<label>Message</label><textarea id="m" maxlength="1500"></textarea><div class="hp"><label>Website</label><input id="w" tabindex="-1" autocomplete="off"></div><div class="err" id="er"></div><div class="ok" id="ok"></div><p><button class="btn" type="submit">Send message</button></p></form>
+<div><h3>Based in Jamaica</h3><p>We reply to every message. If you are a professional who wants to join the team network, say which parish you work in and what you do.</p><div class="note">Already a client? Use the <a href="/portal.html">client portal</a> to message your project manager.</div></div></div></div></section>
+<div id="site-foot"></div><script src="/site.js"></script><script>
+document.getElementById('f').onsubmit=async function(ev){ev.preventDefault();var er=document.getElementById('er'),ok=document.getElementById('ok');er.textContent='';ok.textContent='';
+try{var r=await fetch('/api/public/enquiry',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:n.value,email:e.value,phone:p.value,topic:tp.value,message:m.value,website:w.value})});var j=await r.json();if(!r.ok)throw new Error(j.error||'Could not send');ok.textContent='Thank you. We have your message and will reply soon.';ev.target.reset()}catch(x){er.textContent=x.message}};</script></body></html>

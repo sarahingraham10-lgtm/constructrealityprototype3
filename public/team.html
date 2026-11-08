@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ConstructReality Team</title>
+<style>
+:root{--ink:#000;--paper:#fff;--grey:#f2f2f2;--mid:#666;--line:#d0d0d0;--red:#b00020;--amber:#8a5a00;--green:#14663a}
+*{box-sizing:border-box}body{margin:0;font-family:Helvetica,Arial,sans-serif;color:var(--ink);background:var(--paper);line-height:1.45}
+header{background:#000;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header img{height:30px}header .sp{flex:1}header small{color:#ccc}header a{color:#fff}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:10px 18px;border-bottom:2px solid #000;background:#fff;position:sticky;top:54px;z-index:4}
+nav button{border:2px solid #000;background:#fff;color:#000;padding:7px 12px;font:inherit;font-size:14px;cursor:pointer;border-radius:2px}
+nav button.on{background:#000;color:#fff}nav .b{display:inline-block;min-width:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--red);color:#fff;font-size:12px;text-align:center}
+main{max-width:1150px;margin:0 auto;padding:18px}
+h1{font-size:24px;margin:4px 0 12px}h2{font-size:18px;margin:22px 0 8px;border-bottom:2px solid #000;padding-bottom:5px}h3{font-size:15px;margin:14px 0 6px}
+input,select,textarea,button{font:inherit;padding:8px 10px;border:2px solid #000;border-radius:2px;background:#fff;color:#000}textarea{width:100%;min-height:70px}
+button.p{background:#000;color:#fff;cursor:pointer}button.s{cursor:pointer}button:disabled{opacity:.4}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}th{background:var(--grey)}
+.card{border:2px solid #000;padding:12px 14px;margin:10px 0;background:#fff}.card.click{cursor:pointer}.card.click:hover{background:var(--grey)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.pill{display:inline-block;padding:2px 8px;border:2px solid #000;font-size:12px;border-radius:12px;margin:0 3px 3px 0;white-space:nowrap}
+.pill.done{background:#000;color:#fff}.pill.wait{border-color:var(--line);color:var(--mid)}.pill.hot{border-color:var(--red);color:var(--red);font-weight:700}.pill.work{background:var(--grey)}.pill.rev{border-color:var(--amber);color:var(--amber);font-weight:700}
+.new{background:var(--red);color:#fff;font-size:11px;padding:1px 7px;border-radius:9px;margin-left:6px}
+.al{border-left:6px solid var(--mid);padding:8px 12px;margin:8px 0;background:var(--grey)}.al.high{border-color:var(--red)}.al.medium{border-color:var(--amber)}.al b{display:block}.al small{display:block;color:#333}
+.mut{color:var(--mid);font-size:13px}.help{background:var(--grey);border-left:6px solid #000;padding:8px 12px;margin:10px 0;font-size:14px}
+.num{font-size:30px;font-weight:700}.stat{border:2px solid #000;padding:10px 14px}
+.draw{border:2px solid #000;background:#fff;padding:6px;overflow:auto;max-height:78vh}.draw img{max-width:100%;display:block}
+.msg{border-left:4px solid #000;padding:4px 10px;margin:6px 0}.msg.me{border-color:var(--green)}
+.task{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}.task input{width:20px;height:20px;margin-top:3px}
+.login{max-width:420px;margin:50px auto;border:2px solid #000;padding:24px}.login label{display:block;margin:12px 0 4px;font-weight:700;font-size:14px}.login input,.login select{width:100%}
+.err{color:var(--red);font-weight:700;margin:8px 0}details{border:2px solid #000;margin:10px 0;background:#fff}summary{cursor:pointer;padding:10px 14px;font-weight:700}details>div{padding:4px 14px 14px}
+.tag{font-size:11px;border:1px solid #000;padding:0 5px;margin-left:6px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}.modal>div{background:#fff;border:2px solid #000;padding:20px;max-width:460px;width:100%;max-height:90vh;overflow:auto}
+.pw{font:700 20px monospace;background:var(--grey);padding:8px 12px;border:2px dashed #000;display:inline-block;margin:6px 0}
+@media(max-width:600px){main{padding:12px}nav{top:80px}}
+</style></head><body>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let U=JSON.parse(sessionStorage.getItem('crt')||'null'),ME=null,VIEW={tab:'home',ref:null,focus:null},LIST=[],OV=null,DET=null,USERS=null,ENQ=null,editing=false,PICK='';
+const TRADES=['architect','surveyor','engineer','contractor','supplier'];
+const RN={manager:'Owner',pm:'Project manager',architect:'Architect',surveyor:'Land surveyor',engineer:'Engineer',contractor:'Contractor',supplier:'Supplier',client:'Client'};
+const RP={architect:'Architects',surveyor:'Land surveyors',engineer:'Engineers',contractor:'Contractors',supplier:'Suppliers'};
+const ST={waiting:'Not started',new:'Ready to start',working:'In progress',question:'Needs an answer',review:'Waiting review',changes:'Sent back',done:'Complete'};
+const DEC={open:'Open',approved:'Approved',on_hold:'On hold',cancelled:'Cancelled'};
+const api=async(p,o={})=>{const r=await fetch('/api/team'+p,{...o,headers:{'content-type':'application/json',authorization:'Bearer '+(U&&U.token||''),...(o.headers||{})},body:o.body?JSON.stringify(o.body):undefined});
+ if(r.status===401&&U&&p!=='/login'){U=null;sessionStorage.removeItem('crt');render();throw new Error('signed out')}const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||'Something went wrong');e.data=j;throw e}return j};
+const blobOf=async(p)=>{const r=await fetch('/api/team'+p,{headers:{authorization:'Bearer '+U.token}});if(!r.ok)throw new Error('Could not open the file');return URL.createObjectURL(await r.blob())};
+const when=i=>i?new Date(i).toLocaleString('en-JM',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
+const money=(n,c)=>(c||'JMD')+' '+Number(n).toLocaleString('en-US',{maximumFractionDigits:0});
+const R=()=>U&&U.role,isO=()=>R()==='manager',isPM=()=>R()==='pm',isA=()=>isO()||isPM();
+const toast=t=>alert(t);
+const dest=location.hash==='#client'?'/portal.html':null;
+
+/* ---------------- login ---------------- */
+function loginView(){return `<div class="login"><img src="/logo_black.png" style="height:36px" alt="ConstructReality"><h1>Team sign-in</h1>
+<label>I am signing in as</label><select id="lm"><option value="staff">A team member (username and password)</option><option value="owner">The owner (owner key)</option></select>
+<div id="lf"></div><div class="err" id="le"></div><button class="p" id="lb">Sign in</button>
+<p class="mut">Clients: <a href="/portal.html">use the client portal</a>. Forgot your password? Ask the owner or your project manager for a new temporary one.</p></div>`}
+function loginFields(){const o=$('#lm').value==='owner';$('#lf').innerHTML=o?`<label>Your name</label><input id="ln" maxlength="40"><label>Owner key</label><input id="lp" type="password">`:`<label>Username</label><input id="lu" autocomplete="username"><label>Password</label><input id="lp" type="password" autocomplete="current-password">`;$('#lp').onkeydown=e=>{if(e.key==='Enter')doLogin()}}
+async function doLogin(){try{const o=$('#lm').value==='owner';const j=await api('/login',{method:'POST',body:o?{role:'manager',name:$('#ln').value,pin:$('#lp').value}:{username:$('#lu').value,password:$('#lp').value}});
+ if(j.role==='client'){sessionStorage.setItem('crc',JSON.stringify(j));location.href='/portal.html';return}
+ U=j;sessionStorage.setItem('crt',JSON.stringify(j));await boot();if(j.mustChange)pwModal(true)}catch(e){$('#le').textContent=e.message}}
+
+/* ---------------- shell ---------------- */
+async function boot(){ME=await api('/me');VIEW={tab:isA()?'home':'mine',ref:null};await reload();render()}
+async function reload(){try{const rs=await Promise.all([api('/projects').then(j=>j.projects),api('/overview')]);LIST=rs[0];OV=rs[1];if(VIEW.ref&&!editing)DET=await api('/projects/'+VIEW.ref);if(VIEW.tab==='users'&&!editing)USERS=(await api('/users')).users;if(VIEW.tab==='enq'&&!editing)ENQ=(await api('/enquiries')).enquiries}catch(e){}}
+function tabs(){
+ const mk=(id,l,b)=>`<button data-tab="${id}" class="${VIEW.tab===id&&!VIEW.ref?'on':''}">${l}${b?`<span class="b">${b}</span>`:''}</button>`;
+ if(isO())return mk('home','Overview',OV&&OV.unseen)+mk('all','All projects')+TRADES.map(t=>mk('r:'+t,RP[t],OV&&OV.byRole[t])).join('')+mk('users','People',0)+mk('enq','Enquiries',OV&&OV.enquiries)+mk('guide','Guide');
+ if(isPM())return mk('home','Overview',OV&&OV.review)+mk('all','My clients')+mk('guide','Guide');
+ return mk('mine','My work',OV&&OV.byRole[R()])+mk('all','My projects')+mk('guide','Guide');
+}
+function render(){
+ const a=$('#app');if(!U){a.innerHTML=loginView();$('#lm').onchange=loginFields;loginFields();$('#lb').onclick=doLogin;return}
+ a.innerHTML=`<header><img src="/logo_white.png" alt=""><b>Team workspace</b><span class="sp"></span><small>${esc(U.name)} - ${RN[R()]}</small><button class="s" id="acct">My account</button><button class="s" id="so">Sign out</button></header>
+ <nav>${tabs()}</nav><main id="m">${VIEW.ref?projectView():tabView()}</main>`;
+ $('#so').onclick=()=>{U=null;sessionStorage.removeItem('crt');render()};$('#acct').onclick=()=>pwModal(false);
+ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=async e=>{e.preventDefault();VIEW={tab:b.dataset.tab,ref:null};DET=null;await reload();render()});
+ wire();
+}
+const pcls=s=>s==='done'?'done':s==='waiting'?'wait':['question','changes'].includes(s)?'hot':s==='review'?'rev':'work';
+const pills=c=>TRADES.map(t=>`<span class="pill ${pcls(c.steps[t])}" title="${RN[t]}: ${ST[c.steps[t]]}">${RN[t]}: ${ST[c.steps[t]]}</span>`).join('');
+function card(c,role){return `<div class="card click" data-open="${c.ref}" data-focus="${role||''}"><div class="row"><b>${esc(c.client)}</b><span class="mut">${esc(c.ref)}</span>${c.isNew?'<span class="new">NEW</span>':''}${c.superseded?'<span class="tag">replaced by newer version</span>':''}${c.revisionOf?'<span class="tag">revised design</span>':''}${c.review?`<span class="pill rev">${c.review} waiting your review</span>`:''}${c.high?`<span class="pill hot">${c.high} needs attention</span>`:''}${c.decision!=='open'?`<span class="tag">${DEC[c.decision]}</span>`:''}</div>
+ <div class="mut">${c.storeys} floor${c.storeys>1?'s':''} - ${c.rooms} rooms - ${c.floorArea} m² - sent ${when(c.date)}${isA()?` - PM: ${esc(c.pmName||'none yet')} - client: ${c.clientLinked?esc(c.clientName):'not on portal yet'}`:''}</div><div style="margin-top:6px">${pills(c)}</div></div>`}
+function tabView(){
+ const t=VIEW.tab;
+ if(t==='home')return home();if(t==='mine')return roleList(R(),true);
+ if(t==='all')return `<h1>${isPM()?'My clients\' projects':isO()?'All projects':'My projects'}</h1>${LIST.length?LIST.map(c=>card(c)).join(''):'<p>Nothing yet. '+(isPM()?'The owner assigns projects to you.':'When a client sends a design from the headset, it appears here within seconds.')+'</p>'}`;
+ if(t.startsWith('r:'))return roleList(t.slice(2));if(t==='users')return usersView();if(t==='enq')return enqView();if(t==='guide')return guide();return ''}
+function home(){
+ const need=LIST.filter(c=>(c.high||c.review)&&!c.superseded),fresh=LIST.filter(c=>c.isNew&&!c.superseded);
+ return `<h1>Overview</h1>
+ <div class="grid"><div class="stat"><div class="num">${OV.total}</div>projects</div><div class="stat"><div class="num">${OV.review}</div>waiting for your review</div><div class="stat"><div class="num">${OV.needsYou}</div>need attention</div>${isO()?`<div class="stat"><div class="num">${OV.unassigned}</div>without a project manager</div>`:''}</div>
+ <div class="help"><b>How it works:</b> a client sends a design from the headset and it goes straight to the Architect. Each professional submits their work for <b>review</b>. ${isPM()?'You approve it or send it back with a reason.':'You or the project manager approves it or sends it back with a reason.'} Approving opens the next step and delivers the right drawings to the next person automatically.</div>
+ ${fresh.length?`<h2>New</h2>${fresh.map(c=>card(c)).join('')}`:''}
+ ${need.length?`<h2>Needs you</h2>${need.map(c=>card(c)).join('')}`:''}
+ ${isO()?`<h2>Pipeline</h2><table><tr><th>Step</th><th>Projects with them now</th></tr>${TRADES.map(t=>`<tr><td><a href="#" data-tab="r:${t}">${RP[t]}</a></td><td>${OV.byRole[t]}</td></tr>`).join('')}</table>`:''}
+ <h2>Recent activity</h2>${OV.feed.length?`<table>${OV.feed.map(f=>`<tr><td class="mut">${when(f.t)}</td><td><a href="#" data-open="${f.ref}">${esc(f.ref)}</a></td><td><b>${esc(f.who)}</b>: ${esc(f.text)}</td></tr>`).join('')}</table>`:'<p class="mut">Nothing yet.</p>'}`}
+function roleList(role,mine){
+ const act=LIST.filter(c=>!c.superseded&&['new','working','question','changes','review'].includes(c.steps[role])),wait=LIST.filter(c=>!c.superseded&&c.steps[role]==='waiting'),done=LIST.filter(c=>c.steps[role]==='done'),old=LIST.filter(c=>c.superseded&&c.steps[role]!=='done');
+ const exp={architect:'Reads the client\'s design, checks it, and prepares the drawings for approval.',surveyor:'Measures the real land and checks the house fits on it.',engineer:'Designs the structure so the house stays up in storms.',contractor:'Prices and builds the house.',supplier:'Supplies and prices the materials.'}[role];
+ return `<h1>${mine?'My work':RP[role]+' (their page)'}</h1><div class="help"><b>${RN[role]}:</b> ${exp}</div>
+ <h2>To do now (${act.length})</h2>${act.length?act.map(c=>card(c,role)).join(''):'<p class="mut">Nothing waiting.</p>'}
+ <h2>Coming up (${wait.length})</h2>${wait.length?wait.map(c=>card(c,role)).join(''):'<p class="mut">Nothing.</p>'}
+ <h2>Complete (${done.length})</h2>${done.length?done.map(c=>card(c,role)).join(''):'<p class="mut">Nothing yet.</p>'}
+ ${old.length?`<h2>Replaced by newer designs</h2>${old.map(c=>card(c,role)).join('')}`:''}`}
+
+/* ---------------- project detail ---------------- */
+const SHEETS={'A-101':'Floor plan: walls, doors, windows, room names and sizes. The main drawing.','A-201':'Finishes and furniture.','E-101':'Electrical power plan: sockets, air-conditioner points and the breaker panel.','E-102':'Lighting plan: lights and switches.','P-101':'Plumbing plan: water pipes, drains and fixtures.','S-001':'Schedules and notes: counts of every item.','S-101':'Foundation layout (schematic only, for the engineer).','C-101':'Site plan: plot, assumed setbacks, street.','Q-001':'Quantities for pricing.'};
+const lvName=f=>f.startsWith('level-')?['','Ground floor','First floor','Second floor'][+f.slice(6,7)]:'';
+function projectView(){
+ if(!DET)return `<p>Opening...</p>`;
+ const {workflow:w,summary:s,alerts,boq,finishes,packages:pk,users,names,overview:ov}=DET,F=VIEW.focus||(isA()?'':R());
+ const roles=isA()?TRADES:[R()];
+ const svgs=[];roles.forEach(r=>pk[r].files.filter(f=>f.kind==='drawing').forEach(f=>{if(!svgs.some(x=>x.file===f.file))svgs.push(f)}));
+ return `<p><a href="#" id="back">&larr; Back</a></p>
+ <h1>${esc(s.client)} <span class="mut" style="font-size:15px">${esc(s.ref)}</span></h1>
+ ${w.supersededBy?`<div class="al high"><b>This is an old version.</b>The client sent a newer design: <a href="#" data-open="${w.supersededBy}">${w.supersededBy}</a>. Do not build from this one.</div>`:''}
+ <div class="row">${pills({steps:Object.fromEntries(TRADES.map(t=>[t,w.steps[t].status]))})}${w.manager.decision!=='open'?`<span class="tag">${DEC[w.manager.decision]}</span>`:''}</div>
+ <div class="grid" style="margin-top:10px"><div class="stat"><div class="num">${s.storeys}</div>floor${s.storeys>1?'s':''}</div><div class="stat"><div class="num">${s.rooms}</div>rooms</div><div class="stat"><div class="num">${s.floorArea}</div>m² total floor area</div><div class="stat"><div class="num">${s.plot.w||'?'} x ${s.plot.d||'?'}</div>plot, metres (${s.coverage}% built on)</div></div>
+
+ ${isA()&&ov?overviewHtml(ov,w,s):''}
+
+ <h2>Status board</h2><div class="help">Everyone on the project can see this: who is doing what, and where it is up to.</div>
+ <table><tr><th>Part</th><th>Who</th><th>Status</th><th>Started</th><th>Submitted</th><th>Complete</th>${isA()?'<th>Assign</th>':''}</tr>
+ <tr><td>Client</td><td>${esc(names.client||'not on portal yet')}</td><td>${w.clientDecision.status==='accepted'?'Accepted proposal':w.clientDecision.status==='changes'?'Asked for changes':w.share.at?'Reviewing proposal':'Waiting'}</td><td></td><td></td><td>${w.clientDecision.status==='accepted'?when(w.clientDecision.at):''}</td><td></td></tr>
+ <tr><td>Project manager</td><td>${esc(names.pm||'none yet')}</td><td></td><td></td><td></td><td></td>${isA()?`<td>${isO()?pick('pm',users.pm,w.pm):''}</td>`:''}</tr>
+ ${TRADES.map(t=>`<tr><td>${RN[t]}</td><td>${esc(names.assign[t]||(w.steps[t].owner||'open to all'))}</td><td><span class="pill ${pcls(w.steps[t].status)}">${ST[w.steps[t].status]}</span></td><td>${when(w.steps[t].started)}</td><td>${when(w.steps[t].submitted)}</td><td>${when(w.steps[t].finished)}</td>${isA()?`<td>${pick(t,users[t],w.assign[t])}</td>`:''}</tr>`).join('')}</table>
+ ${isA()?`<p class="mut">Client sign-up details to give the client: reference <b>${esc(w.ref)}</b>, access code <b>${esc(w.claim)}</b>. ${w.client.id?'They have joined.':'They have not joined yet.'}</p>`:''}
+
+ <h2>Things to watch (${alerts.length})</h2>${alerts.length?alerts.map(a=>`<div class="al ${a.level}"><b>${esc(a.title)}</b>${esc(a.why)}<small>What to do: ${esc(a.todo)}</small></div>`).join(''):'<p class="mut">Nothing to flag.</p>'}
+
+ <h2>Drawings sent to ${isA()?'each person':'you'}</h2><div class="help">These went out <b>automatically</b> when each step opened. Each person only gets the drawings they need. Pictures can be opened here. <b>CAD files (.dxf) are the editable versions</b>: open them in AutoCAD, Civil 3D, BricsCAD, Revit (import) or similar, edit, and save as .dwg if you want. Spreadsheet files (.csv) open in Excel. They are drafts made from the client's VR design, not approved drawings.</div>
+ ${roles.map(r=>`<details ${r===F||!isA()?'open':''}><summary>${RN[r]} package - ${pk[r].delivered?'delivered '+when(pk[r].delivered):'not delivered yet (step has not opened)'}</summary><div>${pk[r].files.length?`<table>${pk[r].files.map(f=>`<tr><td>${esc(f.title)}</td><td style="text-align:right;white-space:nowrap">${f.kind==='drawing'?`<button class="s" data-view="${f.file}">View</button> `:''}<button class="s" data-dl="${f.file}">${f.kind==='print'?'Open to print':'Download'}</button></td></tr>`).join('')}</table>`:'<p class="mut">No files.</p>'}</div></details>`).join('')}
+ ${svgs.length?`<h3>Drawing viewer</h3><select id="dsel">${svgs.map(f=>`<option value="${f.file}">${esc(f.title)}</option>`).join('')}</select><p class="mut" id="dnote"></p><div class="draw"><img id="dimg" alt="drawing"></div>`:''}
+
+ <h2>The design in words</h2><table><tr><th>Room</th><th>Floor</th><th>Size (m)</th><th>Area</th><th>Finish: floor</th><th>Finish: walls</th></tr>${s.roomList.map(r=>{const f=finishes.find(x=>x.room===r.name&&x.level===r.level)||{};return `<tr><td>${esc(r.name)}</td><td>${['Ground','First','Second'][r.level]}</td><td>${r.w} x ${r.d}</td><td>${r.area} m²</td><td>${esc(f.floor||'-')}</td><td>${esc(f.walls||'-')}</td></tr>`}).join('')}</table>
+ <h3>Warnings from the design check</h3>${s.issues.length?s.issues.map(i=>`<div class="al ${i.level==='error'?'high':'medium'}">${esc(i.text)}</div>`).join(''):'<p class="mut">None.</p>'}
+
+ <h2>Steps and checklists</h2><div class="help">Each professional ticks their checklist, uploads their work, and presses <b>Submit for review</b>. ${isA()?'You review it, then press <b>Approve</b> or <b>Send back</b> (with a reason).':'The project manager reviews it. If it is sent back, the reason appears here.'}</div>
+ ${TRADES.map(t=>stepBox(w,t,F)).join('')}
+
+ <h2>Quotes</h2>${quotes(w)}
+ <h2>Documents</h2>${docs(w)}
+ ${isA()?proposal(w):''}
+ <h2>Messages</h2>${messages(w,'team')}
+ ${isA()?`<h2>Messages with the client</h2>${messages(w,'client')}`:''}
+ <h2>Material quantities (rough)</h2><div class="help">${esc(boq.note)}</div><table><tr><th>Group</th><th>Item</th><th>Amount</th><th>Note</th></tr>${boq.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><b>${r[2]}</b> ${esc(r[3])}</td><td class="mut">${esc(r[4])}</td></tr>`).join('')}</table>
+ ${isA()?`<h2>Decision and notes</h2><div class="card"><div class="row"><select id="dec">${Object.entries(DEC).map(([k,v])=>`<option value="${k}" ${w.manager.decision===k?'selected':''}>${v}</option>`).join('')}</select><button class="p" id="decb">Save decision</button></div><p class="mut">Private notes (the client cannot see these):</p><textarea id="mnote">${esc(w.manager.note)}</textarea><button class="s" id="mnb">Save note</button></div>`:''}
+ <h2>History</h2><table>${w.log.slice(0,60).map(l=>`<tr><td class="mut" style="white-space:nowrap">${when(l.t)}</td><td><b>${esc(l.who)}</b>: ${esc(l.text)}${l.aud==='client'?' <span class="tag">client sees</span>':''}</td></tr>`).join('')}</table>`}
+function overviewHtml(o,w,s){
+ const c=o.contact||{},src=o.source,m=n=>n==null||n===''?'-':n;
+ const fur=o.furniture||[],fs_=(o.finishes&&Array.isArray(o.finishes)?o.finishes:[]);
+ const link=f=>f.link?`<a href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">link</a>`:'';
+ return `<h2>Everything at a glance</h2><div class="help">All the relevant information about this project in one place: who the client is, how it was sent, what they designed, what they chose, and what has been produced.</div>
+ <div class="card"><b>Client</b><br>${esc(o.client||s.client)}<br><span class="mut">Email:</span> ${esc(m(c.email))} &nbsp; <span class="mut">Phone:</span> ${esc(m(c.phone))}<br><span class="mut">Address:</span> ${esc(m(c.address))}${c.notes?`<br><span class="mut">Their note:</span> ${esc(c.notes)}`:''}</div>
+ <div class="card"><b>How it was sent</b><br>${src?`<span class="mut">Device:</span> <b>${esc(src.device)}</b> &nbsp; <span class="mut">Mode:</span> ${esc(src.via)}<br><span class="mut">Server address used:</span> ${esc(src.host)} &nbsp; <span class="mut">App version:</span> ${esc(m(src.build))}<br><span class="mut">Time:</span> ${when(src.at)}`:'<span class="mut">Not recorded (older project).</span>'}</div>
+ <div class="card"><b>What was produced</b><br>${o.sheetCount} drawing sheets, ${o.fileCount} files in total, ${(o.renders||[]).length} rendered pictures from the client's design.<br><span class="mut">All sheets are concept drafts. A licensed architect, engineer and surveyor must check and sign before building.</span></div>
+ ${(o.renders||[]).length?`<h3>Rendered pictures the client made</h3><div class="grid">${o.renders.map(f=>`<div><img class="rimg" data-rf="${esc(f)}" alt="" style="width:100%;border:1px solid #000"><div class="mut">${esc(f.split('__').pop().slice(3,-4).replace(/-/g,' '))}</div></div>`).join('')}</div>`:'<p class="mut">No rendered pictures were sent with this design.</p>'}
+ <h3>Furniture, decor and fixtures chosen (${fur.length})</h3>${fur.length?`<table><tr><th>Item</th><th>Room</th><th>Size (m)</th><th>Store</th><th>Price</th><th></th></tr>${fur.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(m(f.room))}</td><td>${[f.w,f.d,f.h].filter(x=>x).join(' x ')}</td><td>${esc(m(f.store))}</td><td>${f.price?'J$ '+(+f.price).toLocaleString('en-US'):'-'}</td><td>${link(f)}</td></tr>`).join('')}<tr><td colspan="4"><b>Total of priced items</b></td><td colspan="2"><b>J$ ${(+o.furnitureTotal||0).toLocaleString('en-US')}</b></td></tr></table>`:'<p class="mut">No furniture sent.</p>'}
+ ${o.exterior?`<h3>Outside and finishes the client chose</h3><pre class="mut" style="white-space:pre-wrap;font-size:12px">${esc(JSON.stringify(o.exterior,null,1).slice(0,1500))}</pre>`:''}`}
+function pick(role,list,cur){return `<select data-assign="${role}"><option value="">${role==='pm'?'None':'Open to all'}</option>${(list||[]).map(u=>`<option value="${u.id}" ${u.id===cur?'selected':''}>${esc(u.name)}${u.company?' ('+esc(u.company)+')':''}</option>`).join('')}</select>`}
+function stepBox(w,t,focus){
+ const st=w.steps[t],tasks=w.tasks.filter(x=>x.role===t),done=tasks.filter(x=>x.done).length,mine=isA()||R()===t,open=focus===t||(!isA()&&R()===t)||(!focus&&['new','working','question','changes','review'].includes(st.status));
+ const btns=[['working','Start / still working','s'],['question','I have a question','s'],['review','Submit for review','p']].concat(isA()?[['done','Approve (complete)','p'],['changes','Send back for changes','s']]:[]);
+ return `<details ${open?'open':''} data-box="${t}"><summary>${RN[t]} - ${ST[st.status]} (${done}/${tasks.length} done)${st.owner?` - ${esc(st.owner)}`:''}</summary><div>
+ ${st.status==='waiting'?`<p class="mut">This step opens when the steps before it are complete.${isA()?` <button class="s" data-rel="${t}">Open it now anyway</button>`:''}</p>`:''}
+ ${st.status==='review'?`<div class="al medium"><b>Waiting review</b>Submitted ${when(st.submitted)}. ${isA()?'Check the work, then approve it or send it back.':'The project manager will review it.'}</div>`:''}
+ ${st.status==='changes'?`<div class="al high"><b>Sent back for changes</b>${esc(st.note)}</div>`:''}
+ ${st.note&&st.status!=='changes'?`<p><b>Note:</b> ${esc(st.note)}</p>`:''}
+ ${tasks.map(k=>`<div class="task"><input type="checkbox" data-task="${k.id}" ${k.done?'checked':''} ${mine?'':'disabled'}><div><b>${esc(k.title)}</b><div class="mut">${esc(k.why)}</div>${k.done?`<div class="mut">Ticked by ${esc(k.by)}, ${when(k.at)}</div>`:''}</div></div>`).join('')}
+ ${mine&&st.status!=='waiting'||isA()?`<div style="margin-top:10px"><input data-sn="${t}" placeholder="Note for the team (required when sending back)" style="width:100%;margin-bottom:6px"><div class="row">${btns.map(b=>`<button class="${b[2]}" data-set="${t}:${b[0]}">${b[1]}</button>`).join('')}</div></div>`:''}
+ </div></details>`}
+function quotes(w){
+ const qs=w.quotes,can=isA()||['contractor','supplier'].includes(R());
+ return `${qs.length?`<table><tr><th>From</th><th>Type</th><th>Total</th><th>Valid</th><th>Time</th><th>Note</th><th></th></tr>${qs.map(q=>`<tr><td>${esc(q.who)}${q.accepted?'<span class="tag">CHOSEN</span>':''}</td><td>${RN[q.role]}</td><td><b>${money(q.amount,q.currency)}</b></td><td>${esc(q.valid)}</td><td>${esc(q.days)}</td><td>${esc(q.note)}</td><td>${isA()?`<button class="s" data-acc="${q.id}:${q.accepted?0:1}">${q.accepted?'Un-choose':'Choose'}</button>`:''}</td></tr>`).join('')}</table>`:'<p class="mut">No quotes yet. Contractors give a price for the whole job. Suppliers give prices for materials. Compare at least two of each.</p>'}
+ ${can?`<div class="card"><b>Add a quote</b><div class="row" style="margin-top:6px"><input id="qc" placeholder="Company name"><input id="qa" type="number" placeholder="Total price"><select id="qcur"><option>JMD</option><option>USD</option></select><input id="qv" placeholder="Valid until (e.g. 30 days)"><input id="qd" placeholder="Time to do it (e.g. 6 months)">${isA()?`<select id="qr"><option value="contractor">Contractor</option><option value="supplier">Supplier</option></select>`:''}</div><input id="qn" placeholder="What is included / not included" style="width:100%;margin:6px 0"><button class="p" id="qb">Add quote</button></div>`:''}`}
+function docs(w){
+ return `${w.documents.length?`<table><tr><th>Title</th><th>From</th><th>When</th><th>Note</th><th></th></tr>${w.documents.map(d=>`<tr><td><b>${esc(d.title)}</b> <span class="tag">${esc(d.kind||'document')}</span></td><td>${RN[d.role]} - ${esc(d.who)}</td><td>${when(d.t)}</td><td>${esc(d.note)}</td><td>${d.file?`<button class="s" data-up="${d.id}:${esc(d.name||d.file)}">Download (${Math.round(d.size/1024)} KB)</button>`:d.link?`<a href="${esc(d.link)}" target="_blank" rel="noopener noreferrer">Open link</a>`:''}</td></tr>`).join('')}</table>`:'<p class="mut">No documents yet. The surveyor adds the survey plan, the engineer the structural drawings, the contractor the schedule, and so on.</p>'}
+ <div class="card"><b>Add a document</b><div class="row" style="margin-top:6px"><input id="dt" placeholder="Title (e.g. Survey plan)"><select id="dk"><option>Survey plan</option><option>Structural drawing</option><option>Architectural drawing</option><option>Calculation</option><option>Quote</option><option>Permit or approval</option><option>Photo</option><option>Schedule</option><option>Other</option></select>${isA()?`<select id="dr">${TRADES.map(t=>`<option value="${t}">${RN[t]}</option>`).join('')}</select>`:''}</div><div class="row" style="margin:6px 0"><input type="file" id="df"><input id="dl" placeholder="or paste a https:// link" style="flex:1"></div><input id="dn" placeholder="Note" style="width:100%;margin-bottom:6px"><button class="p" id="db">Add document</button><p class="mut">Allowed: pdf, png, jpg, dxf, dwg, svg, txt, csv, xlsx, docx, zip, rvt, ifc, dgn. Up to 3 MB each. For bigger files, put them in Google Drive and paste the link.</p></div>`}
+function proposal(w){
+ const cq=w.quotes.filter(q=>q.role==='contractor');
+ return `<h2>Proposal for the client</h2><div class="help">When the work is ready, choose the quote you want the client to see, add a note, and share. The client sees it in their portal and can accept or ask for changes. Nothing is shown to the client until you press Share.</div>
+ <div class="card">${w.share.at?`<p>Shared ${when(w.share.at)}. Client decision: <b>${w.clientDecision.status==='accepted'?'Accepted':w.clientDecision.status==='changes'?'Asked for changes':'Waiting for an answer'}</b>${w.clientDecision.note?' - '+esc(w.clientDecision.note):''}</p>`:''}
+ <label class="mut">Quote to show</label><br><select id="shq"><option value="">None</option>${w.quotes.map(q=>`<option value="${q.id}" ${w.share.quote===q.id?'selected':''}>${esc(q.who)} - ${money(q.amount,q.currency)} (${RN[q.role]})</option>`).join('')}</select>
+ <p class="mut">Documents the client may see:</p>${w.documents.length?w.documents.map(d=>`<label style="display:block"><input type="checkbox" data-shd="${d.id}" ${w.share.docs.includes(d.id)?'checked':''}> ${esc(d.title)}</label>`).join(''):'<p class="mut">No documents yet.</p>'}
+ <p class="mut">Your note to the client:</p><textarea id="shn">${esc(w.share.note)}</textarea><button class="p" id="shb">Share with client</button></div>`}
+function messages(w,ch){
+ const ms=w.messages.filter(m=>(m.channel||'team')===ch);
+ return `${ms.map(m=>`<div class="msg ${m.role===R()?'me':''}"><b>${esc(m.who)}</b> <span class="mut">${RN[m.role]} - ${when(m.t)}${m.to?' - to '+RN[m.to]:''}</span><div>${esc(m.text)}</div></div>`).join('')||`<p class="mut">${ch==='team'?'No messages. Use this to ask a question or hand over information, so it is recorded here.':'No messages with the client yet.'}</p>`}
+ <div class="row"><textarea data-mt="${ch}" placeholder="${ch==='team'?'Write a message to the team':'Write a message to the client'}"></textarea></div><div class="row">${ch==='team'?`<select data-mto="${ch}"><option value="">To everyone</option>${['manager','pm',...TRADES].map(r=>`<option value="${r}">${RN[r]}</option>`).join('')}</select>`:''}<button class="p" data-mb="${ch}">Send</button></div>`}
+
+/* ---------------- people and enquiries (owner) ---------------- */
+function usersView(){
+ if(!USERS)return '<p>Loading...</p>';
+ const by=r=>USERS.filter(u=>u.role===r);
+ return `<h1>People</h1><div class="help">You create accounts for your project managers and professionals. Each person gets a username and a temporary password to sign in at <b>/team</b>. Clients create their own accounts on the client portal.</div>
+ <div class="card"><b>Add a team member</b><div class="row" style="margin-top:6px"><select id="nr">${['pm',...TRADES].map(r=>`<option value="${r}">${RN[r]}</option>`).join('')}</select><input id="nn" placeholder="Full name"><input id="nu" placeholder="Username (letters, numbers)"><input id="ne" placeholder="Email"><input id="np" placeholder="Phone"><input id="nc" placeholder="Company"></div><button class="p" id="nb" style="margin-top:8px">Create account</button></div>
+ ${['pm',...TRADES,'client'].map(r=>`<h2>${RN[r]}s (${by(r).length})</h2>${by(r).length?`<table><tr><th>Name</th><th>Username</th><th>Contact</th><th>Last sign-in</th><th></th></tr>${by(r).map(u=>`<tr class="${u.disabled?'dim':''}"><td>${esc(u.name)}${u.company?`<div class="mut">${esc(u.company)}</div>`:''}${u.disabled?'<span class="tag">switched off</span>':''}</td><td>${esc(u.username)}</td><td>${esc(u.email||'')} ${esc(u.phone||'')}</td><td class="mut">${when(u.lastLogin)||'never'}</td><td style="white-space:nowrap"><button class="s" data-reset="${u.id}">New temporary password</button> ${r==='client'?'':`<button class="s" data-off="${u.id}:${u.disabled?0:1}">${u.disabled?'Switch on':'Switch off'}</button>`}</td></tr>`).join('')}</table>`:'<p class="mut">None yet.</p>'}`).join('')}`}
+function enqView(){
+ if(!ENQ)return '<p>Loading...</p>';
+ return `<h1>Website enquiries</h1><p class="mut">People who used the contact form on your website.</p>${ENQ.length?`<table><tr><th>When</th><th>Who</th><th>About</th><th>Message</th><th></th></tr>${ENQ.map(e=>`<tr class="${e.handled?'dim':''}"><td>${when(e.t)}</td><td><b>${esc(e.name)}</b><div class="mut">${esc(e.email)} ${esc(e.phone)}</div></td><td>${esc(e.topic)}</td><td>${esc(e.message)}</td><td><button class="s" data-enq="${e.id}:${e.handled?0:1}">${e.handled?'Re-open':'Mark done'}</button></td></tr>`).join('')}</table>`:'<p>No enquiries yet.</p>'}`}
+function pwModal(force){
+ const d=document.createElement('div');d.className='modal';d.innerHTML=`<div><h2 style="margin-top:0">${force?'Choose your own password':'My account'}</h2>${force?'<p>You signed in with a temporary password. Please choose a new one now.</p>':`<p class="mut">${esc(U.name)} - ${RN[R()]}</p>`}
+ ${ME&&ME.profile?`<label class="mut">Current password</label><br><input id="po" type="password" style="width:100%"><br><label class="mut">New password (8 or more characters)</label><br><input id="pn" type="password" style="width:100%"><div class="err" id="pe"></div><div class="row"><button class="p" id="ps">Change password</button>${force?'':'<button class="s" id="pc">Close</button>'}</div>`:'<p class="mut">This sign-in has no password to change.</p><button class="s" id="pc">Close</button>'}</div>`;
+ document.body.appendChild(d);const c=d.querySelector('#pc');if(c)c.onclick=()=>d.remove();const s=d.querySelector('#ps');if(s)s.onclick=async()=>{try{const j=await api('/password',{method:'POST',body:{old:d.querySelector('#po').value,password:d.querySelector('#pn').value}});U={...U,token:j.token,mustChange:false};sessionStorage.setItem('crt',JSON.stringify(U));d.remove();toast('Password changed.')}catch(e){d.querySelector('#pe').textContent=e.message}}}
+
+/* ---------------- guide ---------------- */
+function guide(){
+ const G=[['Setback','The legal gap between the house and the plot edge or road. Usually checked by the parish council.'],['Footing / foundation','The concrete under the walls that spreads the weight onto the ground.'],['Slab','A flat floor of concrete.'],['Column and beam','Vertical and horizontal concrete or steel members that carry the building\'s weight.'],['Reinforcement (rebar)','Steel bars inside concrete so it does not crack or snap.'],['Soil investigation','Drilling or digging test holes to learn what the ground is made of.'],['Topographic survey','A map of heights on the land, showing slopes.'],['Easement','Land that someone else has a right to use, like a drain or power line route.'],['Bill of quantities (BOQ)','A list of everything needed, with amounts. Prices are added to make a cost.'],['Elevation','A drawing of the outside of the house seen from one side.'],['Section','A drawing as if the house were sliced open to show heights and layers.'],['Specification','Written rules on what quality of materials and workmanship to use.'],['Permit / building approval','Official permission to build, from your local authority, given after plans are checked.'],['Inspection','An official or engineer checking the work at key stages.'],['Hurricane straps','Metal ties that fix the roof to the walls so wind cannot lift it.'],['Quote vs estimate','A quote is a price someone will stand by. An estimate is a rough guess.'],['Variation','A change after work has begun. It usually costs money and time.'],['Retention','A small part of payment held back until defects are fixed.'],['As-built drawings','Drawings updated to show what was really built.'],['DXF / DWG','CAD file types. DXF is the open version that every CAD program reads. DWG is AutoCAD\'s own. Open a DXF in AutoCAD or Civil 3D and Save As DWG.']];
+ const C=[['The client changes their design after sending','They send a new version. The old one is marked "replaced" and everyone is told in the history. The client stays linked to the new one. Always build from the newest.'],['A professional submits work that is not good enough','Press Send back and write exactly what to fix. They see your reason on their page.'],['A room has a design error (overlap, no door)','It shows as a red warning. Ask the architect to fix it with the client before anyone prices it.'],['The real plot is not the size the client said','The surveyor finds this. The house may need to shrink or move. Tell the client early.'],['The house does not fit the setbacks','Surveyor and architect check this with the parish council. It may need changing.'],['The ground is poor or floods','Engineer may change the foundation. Surveyor may require raising the floor. This changes the price.'],['Quotes are very different','Ask each to list what is included. Get a third quote.'],['A professional does not reply','The overview shows how long each step has waited. Phone them, then assign someone else.'],['The client\'s budget is too low','Ask the architect for a smaller or simpler version. Do not hide the cost from the client.'],['Delivery is late or prices rise','Suppliers state how long a quote is valid. Ask for dates in writing.'],['The client wants something unusual (pool, 3 floors, basement)','Flag it to the engineer early. These raise the cost and the risk a lot.'],['The client forgets their password','Use People, then "New temporary password". Give it to them securely. They choose their own at once.'],['Two professionals disagree','Write it in the messages so it is recorded. Ask a senior engineer or architect to decide.']];
+ const Q={architect:['Does this meet our minimum room sizes and the local plan rules?','What drawings does the parish council need, and how long does approval take?','What changes would make this cheaper without hurting the design?'],surveyor:['Is the plot the size on the title? Any boundary disputes?','Does the slope or flooding change the house position?','What are the setbacks and are there easements?'],engineer:['Do we need a soil test? What will it cost?','What will keep the house safe in a hurricane?','Is the staircase / upper floor design adequate?'],contractor:['What is the full price, and what is not included?','How long will it take and what can delay it?','What permits and inspections do you handle?'],supplier:['How long is the price valid?','Is it in stock, and when can it reach the site?','Is there a local alternative?']};
+ return `<h1>Guide</h1>
+ <div class="help"><b>Be honest with clients:</b> this tool collects the design and passes it on. <b>Licensed professionals must check and sign the drawings.</b> Rules differ by parish, so ask your local authority for what is required. Do not tell a client that a design is approved or safe until a licensed professional says so in writing.</div>
+ <h2>Who does what, in order</h2><table><tr><th>Step</th><th>Who</th><th>In plain words</th><th>What you get</th></tr>
+ <tr><td></td><td>Client</td><td>Designs in VR, then follows progress and answers the proposal in the portal.</td><td>A decision.</td></tr>
+ <tr><td></td><td>Project manager</td><td>Looks after one client from start to finish, reviews every professional's work.</td><td>An approved package.</td></tr>
+ <tr><td>1</td><td>Architect</td><td>Turns the client's wishes into proper drawings.</td><td>Checked drawings ready for approval.</td></tr>
+ <tr><td>2a</td><td>Land surveyor</td><td>Measures the real land.</td><td>A signed survey plan.</td></tr>
+ <tr><td>2b</td><td>Engineer</td><td>Makes sure the structure is safe.</td><td>Structural drawings and calculations.</td></tr>
+ <tr><td>3</td><td>Contractor</td><td>The company that builds.</td><td>A price, a schedule, a list of permits.</td></tr>
+ <tr><td>4</td><td>Supplier</td><td>Sells materials.</td><td>Prices and delivery times.</td></tr></table>
+ <h2>Routine for a project manager or owner</h2><ol><li>Open Overview. Read what needs review.</li><li>Open a project. Read "Things to watch".</li><li>Review submitted work. Approve it, or send it back with a clear reason.</li><li>Phone anyone who has held a step for more than 5 days.</li><li>When everything is complete, choose the quote, write a note, and Share the proposal. The client answers in their portal.</li></ol>
+ <h2>Cases and what to do</h2>${C.map(c=>`<details><summary>${esc(c[0])}</summary><div>${esc(c[1])}</div></details>`).join('')}
+ <h2>Questions to ask each professional</h2>${TRADES.map(t=>`<details><summary>${RN[t]}</summary><div><ul>${Q[t].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></details>`).join('')}
+ <h2>Words you will hear</h2><table>${G.map(g=>`<tr><td><b>${esc(g[0])}</b></td><td>${esc(g[1])}</td></tr>`).join('')}</table>
+ <h2>Drawing sheet names</h2><table>${Object.entries(SHEETS).map(([k,v])=>`<tr><td><b>${k}</b></td><td>${esc(v)}</td></tr>`).join('')}</table>`}
+
+/* ---------------- actions ---------------- */
+function wire(){
+ document.querySelectorAll('[data-open]').forEach(e=>e.onclick=async ev=>{if(ev.target.closest('button,input,select'))return;ev.preventDefault();VIEW.ref=e.dataset.open;VIEW.focus=e.dataset.focus||null;DET=null;render();try{DET=await api('/projects/'+VIEW.ref)}catch(x){toast(x.message);VIEW.ref=null}render();window.scrollTo(0,0)});
+ document.querySelectorAll('a[data-tab]').forEach(a=>a.onclick=e=>{e.preventDefault();VIEW={tab:a.dataset.tab,ref:null};render()});
+ const bk=$('#back');if(bk)bk.onclick=async e=>{e.preventDefault();VIEW.ref=null;DET=null;await reload();render()};
+ const ds=$('#dsel');if(ds)ds.onchange=loadDrawing;
+ document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{const s=$('#dsel');s.value=b.dataset.view;loadDrawing();s.scrollIntoView({behavior:'smooth'})});
+ document.querySelectorAll('[data-dl]').forEach(b=>b.onclick=async()=>{const f=b.dataset.dl;try{const u=await blobOf(f.startsWith('export:')?'/files/'+VIEW.ref+'/export/'+f.slice(7):'/files/'+VIEW.ref+'/drawing/'+f);if(f.endsWith('.html')){window.open(u,'_blank')}else{const a=document.createElement('a');a.href=u;a.download=VIEW.ref+'-'+f.replace(/^export:/,'').replace(/__/g,'-');a.click()}}catch(e){toast(e.message)}});
+ document.querySelectorAll('[data-up]').forEach(b=>b.onclick=async()=>{const [id,name]=b.dataset.up.split(':');try{const u=await blobOf('/files/'+VIEW.ref+'/upload/'+id);const a=document.createElement('a');a.href=u;a.download=name;a.click()}catch(e){toast(e.message)}});
+ document.querySelectorAll('[data-task]').forEach(c=>c.onchange=()=>act('/projects/'+VIEW.ref+'/task',{id:c.dataset.task,done:c.checked}));
+ document.querySelectorAll('[data-set]').forEach(b=>b.onclick=async()=>{const [r,s]=b.dataset.set.split(':');const note=document.querySelector(`[data-sn="${r}"]`).value;try{await api('/projects/'+VIEW.ref+'/step',{method:'POST',body:{role:r,status:s,note}})}catch(e){if(e.data&&e.data.needForce&&confirm(e.message+'\n\nContinue anyway?')){await api('/projects/'+VIEW.ref+'/step',{method:'POST',body:{role:r,status:s,note,force:true}})}else{toast(e.message);return}}await refreshDet()});
+ document.querySelectorAll('[data-rel]').forEach(b=>b.onclick=()=>act('/projects/'+VIEW.ref+'/release',{role:b.dataset.rel}));
+ document.querySelectorAll('[data-assign]').forEach(s=>s.onchange=()=>act('/projects/'+VIEW.ref+'/assign',{role:s.dataset.assign,userId:s.value}));
+ document.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>{const [id,v]=b.dataset.acc.split(':');act('/projects/'+VIEW.ref+'/quote/accept',{id,accepted:v==='1'})});
+ const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+ document.querySelectorAll('[data-mb]').forEach(b=>b.onclick=()=>{const ch=b.dataset.mb;act('/projects/'+VIEW.ref+'/message',{text:document.querySelector(`[data-mt="${ch}"]`).value,channel:ch,to:(document.querySelector(`[data-mto="${ch}"]`)||{}).value})});
+ on('#qb',()=>act('/projects/'+VIEW.ref+'/quote',{company:$('#qc').value,amount:$('#qa').value,currency:$('#qcur').value,valid:$('#qv').value,days:$('#qd').value,note:$('#qn').value,role:$('#qr')?$('#qr').value:undefined}));
+ on('#decb',()=>act('/projects/'+VIEW.ref+'/manager',{decision:$('#dec').value}));on('#mnb',()=>act('/projects/'+VIEW.ref+'/manager',{note:$('#mnote').value}));
+ on('#shb',()=>act('/projects/'+VIEW.ref+'/share',{quote:$('#shq').value,note:$('#shn').value,docs:[...document.querySelectorAll('[data-shd]:checked')].map(c=>c.dataset.shd)}));
+ on('#db',async()=>{const f=$('#df').files[0];let data='';if(f){if(f.size>3*1024*1024)return toast('That file is over 3 MB. Put it in Google Drive and paste the link.');data=await new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result.split(',')[1]);x.readAsDataURL(f)})}
+  act('/files/'+VIEW.ref,{title:$('#dt').value,kind:$('#dk').value,note:$('#dn').value,link:$('#dl').value,name:f?f.name:'',data,role:$('#dr')?$('#dr').value:undefined})});
+ on('#nb',async()=>{try{const j=await api('/users',{method:'POST',body:{role:$('#nr').value,name:$('#nn').value,username:$('#nu').value,email:$('#ne').value,phone:$('#np').value,company:$('#nc').value}});showPw(j.user.name,j.user.username,j.password);USERS=(await api('/users')).users;render()}catch(e){toast(e.message)}});
+ document.querySelectorAll('[data-reset]').forEach(b=>b.onclick=async()=>{if(!confirm('Make a new temporary password for this person? Their old one stops working.'))return;try{const j=await api('/users/'+b.dataset.reset+'/reset',{method:'POST',body:{}});const u=USERS.find(x=>x.id===b.dataset.reset);showPw(u.name,u.username,j.password)}catch(e){toast(e.message)}});
+ document.querySelectorAll('[data-off]').forEach(b=>b.onclick=async()=>{const [id,v]=b.dataset.off.split(':');await api('/users/'+id+'/disable',{method:'POST',body:{disabled:v==='1'}});USERS=(await api('/users')).users;render()});
+ document.querySelectorAll('[data-enq]').forEach(b=>b.onclick=async()=>{const [id,v]=b.dataset.enq.split(':');await api('/enquiries/'+id,{method:'POST',body:{handled:v==='1'}});await reload();render()});
+ document.querySelectorAll('textarea,input:not([type=checkbox]),select').forEach(e=>{e.onfocus=()=>editing=true;e.onblur=()=>setTimeout(()=>editing=false,300)});
+ if(VIEW.ref&&DET)loadDrawing();
+}
+function showPw(name,user,pw){const d=document.createElement('div');d.className='modal';d.innerHTML=`<div><h2 style="margin-top:0">Temporary password</h2><p>For <b>${esc(name)}</b> (username <b>${esc(user)}</b>). It is shown <b>only once</b>. Send it to them privately. They will be asked to choose their own.</p><div class="pw">${esc(pw)}</div><br><button class="p" id="x">Done</button></div>`;document.body.appendChild(d);d.querySelector('#x').onclick=()=>d.remove()}
+async function act(p,body){try{await api(p,{method:'POST',body});await refreshDet()}catch(e){toast(e.message)}}
+async function refreshDet(){editing=false;await reload();const keep=[...document.querySelectorAll('details[data-box]')].map(d=>[d.dataset.box,d.open]);const y=scrollY;render();keep.forEach(([b,o])=>{const d=document.querySelector(`details[data-box="${b}"]`);if(d)d.open=o});scrollTo(0,y)}
+let lastDraw='';
+async function loadRenders(){for(const im of document.querySelectorAll('img[data-rf]')){if(im.src)continue;try{im.src=await blobOf('/files/'+VIEW.ref+'/drawing/'+im.dataset.rf)}catch(e){}}}
+async function loadDrawing(){loadRenders();const s=$('#dsel');if(!s||!s.value)return;const key=VIEW.ref+s.value;if(key===lastDraw&&$('#dimg').src)return;lastDraw=key;
+ const id=s.value.split('__').pop().slice(0,5);$('#dnote').textContent=SHEETS[id]||'';
+ try{$('#dimg').src=await blobOf('/files/'+VIEW.ref+'/drawing/'+s.value)}catch(e){$('#dnote').textContent=e.message}}
+setInterval(async()=>{if(U&&!editing&&document.visibilityState==='visible'&&!document.querySelector('.modal')){const was=JSON.stringify([LIST,OV,USERS,ENQ]);const wd=JSON.stringify(DET&&DET.workflow);await reload();if(JSON.stringify([LIST,OV,USERS,ENQ])!==was||JSON.stringify(DET&&DET.workflow)!==wd){const y=scrollY;render();scrollTo(0,y)}}},10000);
+if(U)boot().then(()=>{if(U.mustChange)pwModal(true)}).catch(()=>{U=null;render()});else render();
+</script></body></html>
